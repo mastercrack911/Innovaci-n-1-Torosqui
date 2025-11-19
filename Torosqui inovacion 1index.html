@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TorosquiTrack Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        #map { height: 100%; width: 100%; border-radius: 0.75rem; z-index: 1; }
+        .marker-pin {
+            width: 30px;
+            height: 30px;
+            border-radius: 50% 50% 50% 0;
+            background: #10b981;
+            position: absolute;
+            transform: rotate(-45deg);
+            left: 50%;
+            top: 50%;
+            margin: -15px 0 0 -15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .marker-pin::after {
+            content: attr(data-num);
+            width: 24px;
+            height: 24px;
+            margin: 3px 0 0 3px; 
+            background: #fff; /* Blanco interior opcional */
+            color: white;
+            background: transparent;
+            position: absolute;
+            border-radius: 50%;
+            transform: rotate(45deg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        /* Colores personalizados para marcadores */
+        .bg-green-custom { background-color: #0f766e; } /* Verde oscuro */
+        .bg-orange-custom { background-color: #f97316; } /* Naranja */
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-[#1e293b] text-white flex flex-col shadow-lg z-20">
+        <div class="p-6 border-b border-gray-700 flex items-center gap-2">
+            <div class="text-orange-500 font-bold text-2xl">ʊ</div>
+            <h1 class="font-bold text-xl tracking-tight">Torosqui<span class="font-light">Track</span></h1>
+        </div>
+
+        <div class="flex-1 overflow-y-auto py-4 space-y-2 px-3">
+            <div class="bg-white rounded-lg p-3 flex items-center gap-3 text-gray-800 cursor-pointer shadow-md transform scale-105 transition-transform border-l-4 border-green-500">
+                <div class="w-10 h-10 rounded-full bg-green-700 text-white flex items-center justify-center font-bold text-sm">SJ</div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm">José Ramirez</div>
+                    <div class="text-xs text-gray-500">RT-1049</div>
+                </div>
+            </div>
+
+            <div class="bg-[#334155] rounded-lg p-3 flex items-center gap-3 text-gray-200 cursor-pointer hover:bg-[#475569] transition">
+                <div class="w-10 h-10 rounded-full bg-blue-800 text-white flex items-center justify-center font-bold text-sm">MR</div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm">M. Rodriguez</div>
+                    <div class="text-xs text-gray-400">RT-4008</div>
+                </div>
+            </div>
+
+            <div class="bg-[#334155] rounded-lg p-3 flex items-center gap-3 text-gray-200 cursor-pointer hover:bg-[#475569] transition">
+                <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm">IS</div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm">I. Sanchez</div>
+                    <div class="text-xs text-gray-400">RT-0136</div>
+                </div>
+            </div>
+
+            <div class="bg-[#334155] rounded-lg p-3 flex items-center gap-3 text-gray-200 cursor-pointer hover:bg-[#475569] transition">
+                <div class="w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-sm">AG</div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm">A. Garcia</div>
+                    <div class="text-xs text-gray-400">RT-0427</div>
+                </div>
+            </div>
+
+             <div class="bg-[#334155] rounded-lg p-3 flex items-center gap-3 text-gray-200 cursor-pointer hover:bg-[#475569] transition">
+                <div class="w-10 h-10 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-sm">FA</div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm">F. Alvarez</div>
+                    <div class="text-xs text-gray-400">RT-2264</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0">
+        <header class="bg-white h-16 border-b flex items-center justify-between px-8 shadow-sm">
+            <div class="flex gap-8 text-sm font-medium text-gray-600">
+                <div><span class="text-black font-bold text-lg">38,4 %</span> Deliveries pending</div>
+                <div><span class="text-black font-bold text-lg">85,7 %</span> Completed</div>
+                <div><span class="text-black font-bold text-lg">14,3 %</span> Not delivered</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="h-3 w-3 bg-green-500 rounded-full animate-pulse"></span>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Live Tracking</span>
+            </div>
+        </header>
+
+        <div class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
+            
+            <div class="lg:col-span-1 flex flex-col gap-6">
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="h-16 w-16 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Jose" alt="Avatar" class="h-full w-full object-cover">
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800">José Ramirez</h2>
+                            <p class="text-gray-500 text-sm">Toroequi Logistics</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2 flex justify-between items-end">
+                        <h3 class="text-lg font-semibold text-gray-700">7 / 10 deliveries completed</h3>
+                    </div>
+                    
+                    <div class="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
+                        <div class="bg-[#0f766e] h-3 rounded-full" style="width: 70%"></div>
+                    </div>
+
+                    <div class="flex justify-between text-sm text-gray-600 mb-6">
+                        <span class="font-bold text-black">63,6 % <span class="font-normal text-gray-500">progress</span></span>
+                        <span class="font-bold text-black">2h 21min</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                            <div class="text-xs text-gray-500 mb-1">Distance</div>
+                            <div class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                16,3 km
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                            <div class="text-xs text-gray-500 mb-1">ETA Next Stop</div>
+                            <div class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                2 min
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm p-6 flex justify-between items-center">
+                    <div>
+                        <div class="text-2xl font-bold text-gray-800">63 <span class="text-gray-400 text-lg">/ 100</span></div>
+                        <div class="text-sm text-gray-500">Daily Score</div>
+                    </div>
+                     <div class="bg-gray-100 px-4 py-2 rounded-lg text-gray-700 font-bold">
+                        2 min
+                     </div>
+                </div>
+                 <div class="bg-white rounded-2xl shadow-sm p-6 flex items-center gap-4">
+                    <div class="p-3 rounded-full bg-gray-100 text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M12 12h.01M12 6h.01M12 6a2 2 0 100-4 2 2 0 000 4zm0 6a2 2 0 100-4 2 2 0 000 4zm0 6a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+                    </div>
+                    <div>
+                        <div class="font-bold text-gray-800">Total Route</div>
+                        <div class="text-sm text-gray-500">16.6 km remaining</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-2 relative overflow-hidden">
+                 <div class="absolute bottom-6 right-6 bg-white p-2 rounded shadow-lg z-[400]">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=TorosquiTrack" alt="QR" class="w-12 h-12 opacity-80">
+                </div>
+                
+                <div id="map"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // 1. Inicializar Mapa
+        // Coordenadas centradas aproximadamente para que se vea bien
+        var map = L.map('map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([19.4326, -99.1332], 15); // CDMX como ejemplo
+
+        // 2. Capa de Mapa (Estilo claro/limpio)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // 3. Datos de la ruta (Simulados para parecerse a la imagen)
+        // Coordenadas relativas para formar la "U" de la imagen
+        const centerLat = 19.4326;
+        const centerLng = -99.1332;
+        
+        const points = [
+            { id: 1, lat: centerLat - 0.005, lng: centerLng - 0.006, status: 'done' },
+            { id: 2, lat: centerLat - 0.006, lng: centerLng - 0.004, status: 'done' },
+            { id: 3, lat: centerLat - 0.007, lng: centerLng - 0.002, status: 'done' },
+            { id: 10, lat: centerLat - 0.005, lng: centerLng - 0.001, status: 'done' }, // El 10 está en medio en la imagen
+            { id: 9, lat: centerLat - 0.003, lng: centerLng + 0.0005, status: 'done' },
+            { id: 7, lat: centerLat - 0.001, lng: centerLng + 0.0015, status: 'done' },
+            { id: 8, lat: centerLat + 0.001, lng: centerLng + 0.0025, status: 'done' }, // Hay dos 8s en la imagen, uno verde uno naranja
+            { id: 6, lat: centerLat + 0.002, lng: centerLng + 0.0005, status: 'done' },
+            { id: 5, lat: centerLat + 0.0025, lng: centerLng - 0.002, status: 'done' },
+            { id: 8, lat: centerLat + 0.0025, lng: centerLng + 0.0035, status: 'current', color: 'orange' } // El punto actual
+        ];
+
+        // 4. Dibujar Línea Poligonal (Ruta)
+        const latlngs = points.map(p => [p.lat, p.lng]);
+        const polyline = L.polyline(latlngs, {
+            color: '#64748b', // Gris azulado
+            weight: 4,
+            opacity: 0.6,
+            smoothFactor: 1
+        }).addTo(map);
+
+        // 5. Dibujar Marcadores Personalizados
+        points.forEach(point => {
+            // Color basado en el estado (verde o naranja)
+            const bgColor = point.color === 'orange' ? '#f97316' : '#0f766e';
+            
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color: ${bgColor};" class="w-8 h-8 rounded-full border-2 border-white shadow-md flex items-center justify-center text-white font-bold text-sm">${point.id}</div>`,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            L.marker([point.lat, point.lng], { icon: customIcon }).addTo(map);
+        });
+
+        // Ajustar vista para incluir todos los puntos
+        map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+
+    </script>
+</body>
+</html>
